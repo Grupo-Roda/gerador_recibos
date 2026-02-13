@@ -1,15 +1,17 @@
 {
-  "name": "rodamoinho-receipt-generator",
+  "name": "grupo-rodamoinho",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.3",
+    "@google/genai": "^1.38.0",
     "lucide-react": "^0.563.0",
     "react-dom": "^19.2.3",
     "html2canvas": "1.4.1",
