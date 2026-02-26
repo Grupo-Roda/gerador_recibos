@@ -1,44 +1,35 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  FileText, 
-  Plus, 
-  Trash2, 
-  Printer, 
-  Sparkles, 
-  X, 
-  Loader2, 
-  Image as ImageIcon, 
-  AlertCircle, 
-  Eraser, 
-  ShieldCheck, 
-  Upload,
-  Wallet,
-  CheckCircle2,
-  Lock,
-  Building2,
-  Calculator,
-  Percent,
-  MinusCircle,
-  MapPin,
-  Mail
+  FileText, Plus, Trash2, Printer, Sparkles, AlertCircle, 
+  Eraser, ShieldCheck, Wallet, CheckCircle2, Lock, 
+  Building2, Calculator, Percent, MinusCircle
 } from 'lucide-react';
-import { ReceiptType, ProviderInfo, ReceiptItem, TOMADORES_LIST, ReceiptData } from './types';
+import { ReceiptType, ProviderInfo, ReceiptItem, TOMADORES_LIST } from './types';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-// Componente de Cabeçalho Reutilizável (Tipográfico - Sem Logo)
+// Função para gerar o ID no formato AAAAMMDD + 3 dígitos
+const generateReceiptId = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const randomDigits = Math.floor(100 + Math.random() * 900);
+  return `${year}${month}${day}${randomDigits}`;
+};
+
+// Cabeçalho Clean com a Logo da Empresa
 const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ receiptNumber, city }) => (
-  <div className="flex justify-between items-center mb-8 pb-8 border-b-[0.5mm] border-slate-100 w-full">
+  <div className="flex justify-between items-end mb-8 pb-6 border-b-2 border-[#ffa800] w-full bg-white">
     <div className="flex flex-col">
-      <h1 className="text-[28px] font-black tracking-tighter uppercase leading-none italic text-[#1a1f2c]">GRUPO RODAMOINHO</h1>
-      <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.6em] mt-3">RECIBO SIMPLES</p>
+      {/* A LOGO DEVE ESTAR NA PASTA PUBLIC */}
+      <img src="/LOGO HORIZONTAL.png" alt="Grupo Rodamoinho" className="h-16 w-auto object-contain" />
     </div>
     <div className="text-right">
-      <div className="bg-[#1a1f2c] text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 inline-block shadow-sm">
-        NÚMERO DO DOCUMENTO: {receiptNumber}
-      </div>
-      <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em]">
+      <h1 className="text-black text-[22px] font-black uppercase tracking-widest mb-1">
+        RECIBO Nº {receiptNumber}
+      </h1>
+      <p className="text-black text-[10px] font-bold uppercase tracking-[0.2em]">
         {city.toUpperCase()}, {new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}).toUpperCase()}
       </p>
     </div>
@@ -51,7 +42,6 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('recibos_admin') === 'autenticado');
   const [adminPassword, setAdminPassword] = useState('');
   
-  // Dados do formulário
   const [provider, setProvider] = useState<ProviderInfo>(() => {
     const saved = localStorage.getItem('recibos_provider');
     return saved ? JSON.parse(saved) : { name: '', document: '', address: '', phone: '', email: '', bankInfo: '', signature: '' };
@@ -59,11 +49,8 @@ const App: React.FC = () => {
   
   const [selectedTomadorIndex, setSelectedTomadorIndex] = useState(0);
 
-  const [receiptNumber, setReceiptNumber] = useState<string>(() => {
-    const lastNum = localStorage.getItem('recibos_last_number');
-    const nextNum = lastNum && !isNaN(parseInt(lastNum)) ? parseInt(lastNum) + 1 : 1;
-    return nextNum.toString().padStart(4, '0');
-  });
+  // Usa a nova lógica de numeração
+  const [receiptNumber, setReceiptNumber] = useState<string>(() => generateReceiptId());
 
   const [items, setItems] = useState<ReceiptItem[]>([{ id: '1', description: '', value: 0 }]);
   const [discount, setDiscount] = useState<number>(0);
@@ -82,21 +69,17 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('recibos_history');
     return saved ? JSON.parse(saved) : [];
   });
-  const [isEnhancing, setIsEnhancing] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [isPrinting, setIsPrinting] = useState(false);
 
-  // Refs para Assinatura
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
-  // Persistência
   useEffect(() => { localStorage.setItem('recibos_provider', JSON.stringify(provider)); }, [provider]);
   useEffect(() => { localStorage.setItem('recibos_history', JSON.stringify(history)); }, [history]);
   useEffect(() => { if (statusMessage) { const timer = setTimeout(() => setStatusMessage(null), 4000); return () => clearTimeout(timer); } }, [statusMessage]);
 
-  // Validações e Máscaras
   const maskDocument = (val: string) => {
     const digits = val.replace(/\D/g, '').slice(0, 14);
     if (digits.length <= 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
@@ -112,9 +95,7 @@ const App: React.FC = () => {
   const validateEmail = (email: string) => {
     return String(email)
       .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      );
+      .match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
   };
 
   const selectedTomador = TOMADORES_LIST[selectedTomadorIndex];
@@ -216,34 +197,17 @@ const App: React.FC = () => {
       };
       setHistory(prev => [newEntry, ...prev]);
       
-      const nextNum = (parseInt(receiptNumber) + 1).toString().padStart(4, '0');
-      setReceiptNumber(nextNum);
-      localStorage.setItem('recibos_last_number', receiptNumber);
+      // Gera um novo número para o próximo recibo
+      setReceiptNumber(generateReceiptId());
       setStatusMessage({ type: 'success', text: 'Recibo gerado com sucesso!' });
     } catch (e) {
       setStatusMessage({ type: 'error', text: 'Erro ao processar PDF.' });
     } finally { setIsPrinting(false); }
   };
 
-  const enhanceDescription = async (id: string) => {
-    const item = items.find(i => i.id === id);
-    if (!item || !item.description.trim() || isEnhancing) return;
-    setIsEnhancing(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Melhore esta descrição de serviço: "${item.description}". Retorne apenas o texto curto e formal em PT-BR.`,
-      });
-      if (response.text) {
-        setItems(prev => prev.map(i => i.id === id ? { ...i, description: response.text!.trim() } : i));
-      }
-    } catch (e) { setStatusMessage({ type: 'error', text: 'Erro na IA.' }); }
-    finally { setIsEnhancing(false); }
-  };
-
   const loginAdmin = () => {
-    if (adminPassword === "senha123") {
+    // Substitua 'rodamoinho2024' pela senha que desejar
+    if (adminPassword === "rodamoinho2024") {
       setIsAdmin(true);
       localStorage.setItem('recibos_admin', 'autenticado');
     } else { setStatusMessage({ type: 'error', text: 'Senha incorreta.' }); }
@@ -268,16 +232,16 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* PAINEL DE CONTROLE */}
+      {/* PAINEL DE CONTROLE (Mantido estilo moderno do app) */}
       <div className="lg:w-2/5 p-6 lg:p-8 no-print overflow-y-auto max-h-screen border-r border-slate-200 bg-white no-scrollbar">
         <header className="mb-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-orange-600 p-2.5 rounded-2xl text-white shadow-xl shadow-orange-600/20"><FileText size={22} /></div>
+            <div className="bg-[#ffa800] p-2.5 rounded-2xl text-white shadow-xl shadow-[#ffa800]/20"><FileText size={22} /></div>
             <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic">GRUPO RODAMOINHO</h1>
           </div>
           <div className="flex bg-slate-100 p-1 rounded-2xl">
-            <button onClick={() => setActiveTab('form')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'form' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Gerador</button>
-            <button onClick={() => setActiveTab('history')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Histórico</button>
+            <button onClick={() => setActiveTab('form')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'form' ? 'bg-white text-[#ffa800] shadow-md' : 'text-slate-400'}`}>Gerador</button>
+            <button onClick={() => setActiveTab('history')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-[#ffa800] shadow-md' : 'text-slate-400'}`}>Histórico</button>
           </div>
         </header>
 
@@ -285,15 +249,15 @@ const App: React.FC = () => {
           <div className="space-y-8 pb-20">
             {/* Empresa Tomadora */}
             <section className="bg-slate-50/50 rounded-[32px] p-8 border border-slate-100 shadow-sm">
-              <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-orange-600 mb-6 flex items-center gap-2"><Building2 size={16}/> Empresa Tomadora</h3>
+              <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-[#ffa800] mb-6 flex items-center gap-2"><Building2 size={16}/> Empresa Tomadora</h3>
               <div className="space-y-3">
                 {TOMADORES_LIST.map((tomador, idx) => (
-                  <button key={idx} onClick={() => setSelectedTomadorIndex(idx)} className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedTomadorIndex === idx ? 'bg-white border-orange-500 shadow-md' : 'bg-white/50 border-slate-100 hover:border-slate-300'}`}>
+                  <button key={idx} onClick={() => setSelectedTomadorIndex(idx)} className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedTomadorIndex === idx ? 'bg-white border-[#ffa800] shadow-md' : 'bg-white/50 border-slate-100 hover:border-slate-300'}`}>
                     <div>
-                      <p className={`text-[10px] font-black uppercase mb-0.5 ${selectedTomadorIndex === idx ? 'text-orange-600' : 'text-slate-700'}`}>{tomador.name}</p>
+                      <p className={`text-[10px] font-black uppercase mb-0.5 ${selectedTomadorIndex === idx ? 'text-[#ffa800]' : 'text-slate-700'}`}>{tomador.name}</p>
                       <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">CNPJ: {tomador.cnpj}</p>
                     </div>
-                    {selectedTomadorIndex === idx && <CheckCircle2 size={16} className="text-orange-600 shrink-0"/>}
+                    {selectedTomadorIndex === idx && <CheckCircle2 size={16} className="text-[#ffa800] shrink-0"/>}
                   </button>
                 ))}
               </div>
@@ -302,7 +266,7 @@ const App: React.FC = () => {
             {/* Prestador */}
             <section className="bg-slate-50/50 rounded-[32px] p-8 border border-slate-100 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-orange-600">Emissor (Prestador)</h3>
+                <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-[#ffa800]">Emissor (Prestador)</h3>
                 <button onClick={resetForm} className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-rose-500 transition-colors"><Eraser size={14}/> Limpar Campos</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -331,7 +295,7 @@ const App: React.FC = () => {
                   <input type="text" className={getFieldClass('bankInfo', "w-full px-5 py-3 bg-white border rounded-2xl font-bold uppercase text-[13px] outline-none")} value={provider.bankInfo} onChange={e => setProvider(prev => ({...prev, bankInfo: e.target.value}))} />
                 </div>
                 <div className="md:col-span-2 space-y-3">
-                  <div className="flex justify-between items-center"><label className="text-[10px] font-black uppercase text-slate-400">Assinatura Digital</label><button onClick={clearSignature} className="text-[9px] font-black text-orange-600 uppercase">Limpar</button></div>
+                  <div className="flex justify-between items-center"><label className="text-[10px] font-black uppercase text-slate-400">Assinatura Digital</label><button onClick={clearSignature} className="text-[9px] font-black text-[#ffa800] uppercase">Limpar</button></div>
                   <div className="h-40 bg-white rounded-[24px] border-2 border-slate-100 relative cursor-crosshair overflow-hidden touch-none shadow-inner">
                     <canvas ref={canvasRef} width={800} height={250} className="absolute inset-0 w-full h-full" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
                   </div>
@@ -341,27 +305,24 @@ const App: React.FC = () => {
 
             {/* Serviços e Resumo Financeiro */}
             <section className="bg-slate-50/50 rounded-[32px] p-8 border border-slate-100 shadow-sm">
-              <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-orange-600 mb-6 flex items-center gap-2"><Calculator size={16}/> Detalhamento Financeiro</h3>
+              <h3 className="font-black uppercase text-[11px] tracking-[0.2em] text-[#ffa800] mb-6 flex items-center gap-2"><Calculator size={16}/> Detalhamento Financeiro</h3>
               <div className="space-y-4 mb-8">
                 {items.map((item, idx) => (
                   <div key={item.id} className="p-5 bg-white rounded-[24px] shadow-sm border border-slate-100/50 space-y-3">
                     <div className="flex gap-4 items-start">
                       <div className="flex-grow space-y-1">
-                        <label className="text-[9px] font-black text-orange-600 uppercase">Descrição do Serviço *</label>
-                        <div className="relative">
-                          <input type="text" className={getFieldClass(`itemDesc_${item.id}`, "w-full px-4 py-2.5 bg-slate-50 border rounded-xl font-bold uppercase text-[12px] pr-10")} value={item.description} onChange={e => setItems(items.map(i => i.id === item.id ? {...i, description: e.target.value} : i))} />
-                          <button onClick={() => enhanceDescription(item.id)} className={`absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-orange-500 ${isEnhancing ? 'animate-spin' : ''}`}><Sparkles size={16} /></button>
-                        </div>
+                        <label className="text-[9px] font-black text-[#ffa800] uppercase">Descrição do Serviço *</label>
+                        <input type="text" className={getFieldClass(`itemDesc_${item.id}`, "w-full px-4 py-2.5 bg-slate-50 border rounded-xl font-bold uppercase text-[12px]")} value={item.description} onChange={e => setItems(items.map(i => i.id === item.id ? {...i, description: e.target.value} : i))} />
                       </div>
                       <div className="w-28 space-y-1 shrink-0">
-                        <label className="text-[9px] font-black text-orange-600 uppercase text-right block">Valor R$ *</label>
+                        <label className="text-[9px] font-black text-[#ffa800] uppercase text-right block">Valor R$ *</label>
                         <input type="number" className={getFieldClass(`itemValue_${item.id}`, "w-full px-4 py-2.5 bg-slate-50 border rounded-xl font-black text-right text-[14px]")} value={item.value || ''} onChange={e => setTaxesPercentage(0) || setItems(items.map(i => i.id === item.id ? {...i, value: parseFloat(e.target.value) || 0} : i))} />
                       </div>
                       {items.length > 1 && <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="text-slate-200 hover:text-rose-500 mt-8 shrink-0"><Trash2 size={18}/></button>}
                     </div>
                   </div>
                 ))}
-                <button onClick={() => setItems([...items, {id: Date.now().toString(), description:'', value:0}])} className="w-full py-3 border-2 border-dashed border-orange-200 rounded-[20px] text-orange-600 font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-50 transition-all"><Plus size={16}/> Novo Item</button>
+                <button onClick={() => setItems([...items, {id: Date.now().toString(), description:'', value:0}])} className="w-full py-3 border-2 border-dashed border-[#ffa800] rounded-[20px] text-[#ffa800] font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-orange-50 transition-all"><Plus size={16}/> Novo Item</button>
               </div>
 
               {/* Deduções */}
@@ -378,7 +339,7 @@ const App: React.FC = () => {
             </section>
 
             <div className="sticky bottom-6">
-              <button onClick={() => generatePDF(true)} disabled={isPrinting} className="w-full py-5 bg-orange-600 text-white rounded-[24px] font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl shadow-orange-600/40 hover:bg-orange-700 transition-all flex items-center justify-center gap-3">
+              <button onClick={() => generatePDF(true)} disabled={isPrinting} className="w-full py-5 bg-[#ffa800] text-white rounded-[24px] font-black uppercase text-[11px] tracking-[0.25em] shadow-2xl shadow-[#ffa800]/40 hover:bg-[#e69700] transition-all flex items-center justify-center gap-3">
                 {isPrinting ? <Loader2 size={22} className="animate-spin"/> : <Printer size={22}/>} Finalizar e Baixar Recibo
               </button>
             </div>
@@ -417,47 +378,43 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* PRÉ-VISUALIZAÇÃO A4 */}
+      {/* PRÉ-VISUALIZAÇÃO A4 (LAYOUT CLEAN) */}
       <div className="lg:w-3/5 bg-slate-200/30 p-6 lg:p-12 flex justify-center items-start overflow-y-auto h-screen no-scrollbar no-print">
-        <div className="bg-white shadow-2xl flex flex-col relative scale-[0.6] md:scale-[0.8] lg:scale-[1] origin-top" id="printable-receipt" style={{ width: '210mm', minHeight: '297mm', padding: '15mm 20mm', boxSizing: 'border-box', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', color: '#1a1f2c', fontFamily: "'Inter', sans-serif" }}>
+        <div className="bg-white shadow-2xl flex flex-col relative scale-[0.6] md:scale-[0.8] lg:scale-[1] origin-top" id="printable-receipt" style={{ width: '210mm', minHeight: '297mm', padding: '15mm 20mm', boxSizing: 'border-box', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', color: '#000000', fontFamily: "'Inter', sans-serif" }}>
           
           <ReceiptHeader receiptNumber={receiptNumber} city={city} />
 
-          <div className="mb-8 text-center">
-            <h2 className="text-[18px] font-black uppercase tracking-[0.4em] text-slate-900">RECIBO DE <span className="text-orange-600">PAGAMENTO</span></h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-10 mb-8">
+          <div className="grid grid-cols-2 gap-10 mb-8 mt-4">
              <div className="space-y-6">
                 <div>
-                   <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-3 italic">PAGADOR (TOMADOR)</h4>
-                   <div className="p-6 bg-slate-50 rounded-[24px] space-y-1 text-[10px] border border-slate-100">
-                      <p className="font-black text-[11px] text-[#1a1f2c] uppercase">{selectedTomador.name}</p>
-                      <p className="text-slate-500 font-bold">CNPJ: {selectedTomador.cnpj}</p>
-                      <p className="text-slate-400 font-bold uppercase">{selectedTomador.address}</p>
-                      <p className="text-slate-400 font-bold uppercase">{selectedTomador.neighborhood} - CEP: {selectedTomador.cep}</p>
+                   <h4 className="text-[10px] font-black text-[#ffa800] uppercase tracking-widest mb-2 italic border-b border-[#ffa800] pb-1 inline-block">PAGADOR (TOMADOR)</h4>
+                   <div className="pt-2 space-y-1 text-[10px]">
+                      <p className="font-black text-[12px] text-black uppercase">{selectedTomador.name}</p>
+                      <p className="text-black font-medium">CNPJ: <span className="font-bold">{selectedTomador.cnpj}</span></p>
+                      <p className="text-black font-medium uppercase">{selectedTomador.address}</p>
+                      <p className="text-black font-medium uppercase">{selectedTomador.neighborhood} - CEP: {selectedTomador.cep}</p>
                    </div>
                 </div>
                 <div>
-                   <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-3 italic">RECEBEDOR (PRESTADOR)</h4>
-                   <div className="p-6 bg-white border-2 border-slate-50 rounded-[24px] space-y-1 text-[10px]">
-                      <p className="font-black text-[11px] uppercase text-[#1a1f2c]">{provider.name || "---"}</p>
-                      <p className="text-slate-500 font-bold">DOC: {provider.document || "---"}</p>
-                      {provider.address && <p className="text-slate-400 font-bold uppercase leading-tight">{provider.address}</p>}
-                      {provider.phone && <p className="text-slate-400 font-bold">{provider.phone}</p>}
-                      {provider.email && <p className="text-slate-400 font-bold lowercase italic">{provider.email}</p>}
+                   <h4 className="text-[10px] font-black text-[#ffa800] uppercase tracking-widest mb-2 italic border-b border-[#ffa800] pb-1 inline-block">RECEBEDOR (PRESTADOR)</h4>
+                   <div className="pt-2 space-y-1 text-[10px]">
+                      <p className="font-black text-[12px] uppercase text-black">{provider.name || "NOME DO PRESTADOR"}</p>
+                      <p className="text-black font-medium">DOC: <span className="font-bold">{provider.document || "---"}</span></p>
+                      {provider.address && <p className="text-black font-medium uppercase leading-tight">{provider.address}</p>}
+                      {provider.phone && <p className="text-black font-medium">{provider.phone}</p>}
+                      {provider.email && <p className="text-black font-medium lowercase italic">{provider.email}</p>}
                    </div>
                 </div>
              </div>
-             <div className="flex flex-col justify-between">
-                <div className="bg-[#1a1f2c] rounded-[36px] p-8 flex flex-col items-center justify-center text-center shadow-xl">
-                   <Wallet className="text-orange-600 mb-3" size={32}/>
-                   <p className="text-orange-600 text-[9px] font-black uppercase tracking-[0.4em] mb-2">VALOR TOTAL BRUTO</p>
-                   <p className="text-white text-[32px] font-black tracking-tighter leading-none">{formatCurrency(totalBruto)}</p>
+
+             <div className="flex flex-col justify-between items-end">
+                <div className="border-2 border-black rounded-[16px] p-6 flex flex-col items-center justify-center text-center w-full max-w-[280px]">
+                   <p className="text-[#ffa800] text-[10px] font-black uppercase tracking-[0.3em] mb-2">VALOR TOTAL BRUTO</p>
+                   <p className="text-black text-[32px] font-black tracking-tighter leading-none">{formatCurrency(totalBruto)}</p>
                 </div>
-                <div className="mt-6 bg-orange-50/40 p-6 rounded-[28px] text-center border border-orange-100">
-                   <h4 className="text-[9px] font-black text-orange-600 uppercase mb-2">FORMA DE CRÉDITO:</h4>
-                   <p className="text-[12px] font-black text-[#1a1f2c] uppercase italic leading-tight">{provider.bankInfo || "A COMBINAR"}</p>
+                <div className="mt-4 w-full max-w-[280px] border border-black p-4 rounded-[12px] text-center">
+                   <h4 className="text-[9px] font-black text-[#ffa800] uppercase mb-1">DADOS BANCÁRIOS / PIX:</h4>
+                   <p className="text-[11px] font-bold text-black uppercase italic leading-tight">{provider.bankInfo || "A COMBINAR"}</p>
                 </div>
              </div>
           </div>
@@ -465,23 +422,23 @@ const App: React.FC = () => {
           <div className="flex-grow">
              <table className="w-full">
                 <thead>
-                   <tr className="bg-slate-50 border-y-2 border-slate-200">
-                      <th className="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ITEM E DESCRIÇÃO</th>
-                      <th className="text-center py-4 px-6 text-[10px] font-black text-slate-400 uppercase w-40 tracking-[0.2em]">VALOR BRUTO (R$)</th>
+                   <tr className="border-y-2 border-[#ffa800]">
+                      <th className="text-left py-3 px-2 text-[10px] font-black text-black uppercase tracking-[0.2em]">ITEM E DESCRIÇÃO</th>
+                      <th className="text-right py-3 px-2 text-[10px] font-black text-black uppercase w-40 tracking-[0.2em]">VALOR BRUTO (R$)</th>
                    </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-gray-200">
                    {items.map((item, i) => (
                      <tr key={item.id}>
-                        <td className="py-5 px-6">
-                           <div className="flex items-center gap-4">
-                             <div className="bg-orange-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0">
-                               {String(i+1).padStart(2, '0')}
+                        <td className="py-4 px-2">
+                           <div className="flex items-center gap-3">
+                             <div className="text-[#ffa800] font-black text-[12px]">
+                               {String(i+1).padStart(2, '0')}.
                              </div>
-                             <p className="text-[#1a1f2c] font-black text-[12px] uppercase">{item.description || "SERVIÇOS PRESTADOS"}</p>
+                             <p className="text-black font-bold text-[12px] uppercase">{item.description || "SERVIÇOS PRESTADOS"}</p>
                            </div>
                         </td>
-                        <td className="py-5 px-6 text-center font-black text-[#1a1f2c] text-[14px]">
+                        <td className="py-4 px-2 text-right font-black text-black text-[14px]">
                           {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(item.value)}
                         </td>
                      </tr>
@@ -489,36 +446,33 @@ const App: React.FC = () => {
                 </tbody>
              </table>
 
-             {/* RESUMO FINANCEIRO ORGANIZADO E PROFISSIONAL */}
+             {/* RESUMO FINANCEIRO CLEAN */}
              <div className="mt-8 flex justify-end">
-                <div className="w-[380px] space-y-3">
-                   {/* Linha Subtotal */}
-                   <div className="flex justify-between items-center py-2 px-6 border-b border-slate-100">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">SUBTOTAL BRUTO</span>
-                      <span className="text-[14px] font-black text-slate-600">{formatCurrency(totalBruto)}</span>
+                <div className="w-[380px] space-y-2">
+                   <div className="flex justify-between items-center py-2 px-4 border-b border-gray-200">
+                      <span className="text-[10px] font-black text-black uppercase tracking-[0.2em]">SUBTOTAL BRUTO</span>
+                      <span className="text-[14px] font-black text-black">{formatCurrency(totalBruto)}</span>
                    </div>
                    
-                   {/* Linha Descontos */}
                    {discount > 0 && (
-                     <div className="flex justify-between items-center py-2 px-6 border-b border-slate-100">
-                        <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">(-) DESCONTOS</span>
-                        <span className="text-[14px] font-black text-rose-500">{formatCurrency(discount)}</span>
+                     <div className="flex justify-between items-center py-2 px-4 border-b border-gray-200">
+                        <span className="text-[10px] font-black text-black uppercase tracking-[0.2em]">(-) DESCONTOS</span>
+                        <span className="text-[14px] font-bold text-black">{formatCurrency(discount)}</span>
                      </div>
                    )}
                    
-                   {/* Linha Impostos */}
                    {taxesPercentage > 0 && (
-                     <div className="flex justify-between items-center py-2 px-6 border-b border-slate-100">
-                        <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">(-) IMPOSTOS ({taxesPercentage}%)</span>
-                        <span className="text-[14px] font-black text-rose-500">{formatCurrency(taxesValue)}</span>
+                     <div className="flex justify-between items-center py-2 px-4 border-b border-gray-200">
+                        <span className="text-[10px] font-black text-black uppercase tracking-[0.2em]">(-) IMPOSTOS ({taxesPercentage}%)</span>
+                        <span className="text-[14px] font-bold text-black">{formatCurrency(taxesValue)}</span>
                      </div>
                    )}
                    
-                   {/* Caixa Valor Líquido (Destaque Profissional) */}
-                   <div className="bg-[#1a1f2c] text-white p-6 rounded-[28px] flex justify-between items-center shadow-xl mt-4">
+                   {/* CAIXA LÍQUIDA CLEAN */}
+                   <div className="border-2 border-black bg-white text-black p-5 rounded-[16px] flex justify-between items-center mt-4">
                       <div className="flex flex-col">
-                        <span className="text-[9px] font-black text-orange-600 uppercase tracking-[0.4em] mb-1 italic">VALOR LÍQUIDO</span>
-                        <span className="text-[11px] font-bold text-slate-400 uppercase">TOTAL A RECEBER</span>
+                        <span className="text-[9px] font-black text-[#ffa800] uppercase tracking-[0.4em] mb-1 italic">VALOR LÍQUIDO</span>
+                        <span className="text-[11px] font-bold text-black uppercase">TOTAL A RECEBER</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[26px] font-black tracking-tighter leading-none">{formattedTotalLiquido}</span>
@@ -528,25 +482,26 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          <div className="pt-10 border-t-[1.2mm] border-[#000000] mt-10">
+          {/* ASSINATURA E RODAPÉ */}
+          <div className="pt-8 border-t-[1.5mm] border-black mt-10">
              <div className="flex gap-12 items-end">
                 <div className="flex-grow text-center flex flex-col items-center">
                    <div className="relative w-80">
                       <div className="h-24 flex items-end justify-center mb-[-4px]">
                          {provider.signature && <img src={provider.signature} className="max-h-[160%] w-auto object-contain translate-y-7 scale-110" alt="Assinatura" />}
                       </div>
-                      <div className="w-full h-[0.6mm] bg-[#000000] mb-4"></div>
-                      <p className="font-black text-[#1a1f2c] text-[12px] uppercase leading-none mb-1">{provider.name || "ASSINATURA DO EMISSOR"}</p>
-                      <p className="text-slate-400 font-bold text-[8px] uppercase tracking-widest italic">VALOR RECEBIDO E QUITADO INTEGRALMENTE</p>
+                      <div className="w-full h-[0.6mm] bg-black mb-4"></div>
+                      <p className="font-black text-black text-[12px] uppercase leading-none mb-1">{provider.name || "ASSINATURA DO EMISSOR"}</p>
+                      <p className="text-black font-bold text-[8px] uppercase tracking-widest italic">VALOR RECEBIDO E QUITADO INTEGRALMENTE</p>
                    </div>
-                   <div className="mt-6 flex items-center gap-2.5 bg-slate-50 px-5 py-2 rounded-full border border-slate-200">
-                       <ShieldCheck size={12} className="text-orange-500"/><span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.4em]">DOCUMENTO VALIDADO DIGITALMENTE</span>
+                   <div className="mt-6 flex items-center gap-2.5 border border-black px-5 py-2 rounded-full">
+                       <ShieldCheck size={14} className="text-[#ffa800]"/><span className="text-[8px] font-black text-black uppercase tracking-[0.3em]">DOCUMENTO VALIDADO DIGITALMENTE</span>
                    </div>
                 </div>
                 <div className="w-72">
-                   <div className="bg-orange-600 rounded-[32px] p-7 text-white text-center shadow-lg">
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] block mb-2 opacity-80 italic italic">LÍQUIDO A PAGAR</span>
-                      <span className="text-[28px] font-black tracking-tighter leading-none block">{formattedTotalLiquido}</span>
+                   <div className="border-[3px] border-[#ffa800] bg-white rounded-[24px] p-6 text-center">
+                      <span className="text-[10px] font-black uppercase text-black tracking-[0.3em] block mb-2 italic">LÍQUIDO A PAGAR</span>
+                      <span className="text-[26px] font-black text-black tracking-tighter leading-none block">{formattedTotalLiquido}</span>
                    </div>
                 </div>
              </div>
