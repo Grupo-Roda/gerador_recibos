@@ -7,6 +7,7 @@ import {
 import { ReceiptType, ProviderInfo, ReceiptItem, TOMADORES_LIST } from './types';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import logoEmpresa from './logo.png';
 
 // Função para gerar o ID no formato AAAAMMDD + 3 dígitos
 const generateReceiptId = () => {
@@ -23,12 +24,7 @@ const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ rece
   <div className="flex justify-between items-end mb-8 pb-6 border-b-2 border-[#ffa800] w-full bg-white">
     <div className="flex flex-col">
       {/* A LOGO DEVE ESTAR NA PASTA PUBLIC */}
-      <img 
-        src="https://pagamentos.rodamoinho.cloud/logo.png" 
-        alt="Grupo Rodamoinho" 
-        crossOrigin="anonymous" 
-        className="h-16 w-auto object-contain" 
-      />
+      <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-16 w-auto object-contain" />
     </div>
     <div className="text-right">
       <h1 className="text-black text-[22px] font-black uppercase tracking-widest mb-1">
