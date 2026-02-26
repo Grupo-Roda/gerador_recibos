@@ -24,7 +24,7 @@ const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ rece
     <div className="flex flex-col">
       {/* A LOGO DEVE ESTAR NA PASTA PUBLIC */}
       <img 
-        src="COLE_O_LINK_DIRETO_AQUI.png" 
+        src="https://pagamentos.rodamoinho.cloud/logo.png" 
         alt="Grupo Rodamoinho" 
         crossOrigin="anonymous" 
         className="h-16 w-auto object-contain" 
