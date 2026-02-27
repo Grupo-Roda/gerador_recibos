@@ -574,7 +574,7 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          {/* RODAPÉ E ASSINATURAS */}
+          {/* RODAPÉ E ASSINATURAS (Final do trecho que te mandei antes) */}
           <div className="mt-auto pt-6 border-t border-slate-200 shrink-0">
              <div className="flex gap-8 items-end">
                 <div className="flex-grow text-center flex flex-col items-center">
@@ -610,5 +610,8 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
+    </div> 
+  );
+};
 
 export default App;
