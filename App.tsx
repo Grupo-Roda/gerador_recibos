@@ -35,7 +35,6 @@ const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ rece
   <div className="flex justify-between items-start mb-10 pb-10 border-b border-slate-100 w-full">
     <div className="flex flex-col">
       <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-12 w-auto object-contain mb-4" />
-      <h1 className="text-[28px] font-black tracking-tight uppercase leading-none italic text-slate-900">GRUPO RODAMOINHO</h1>
       <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mt-4 flex items-center gap-3">
         <span className="h-[1px] w-6 bg-slate-900"></span>
         RECIBO SIMPLES
@@ -203,38 +202,53 @@ const App: React.FC = () => {
       setStatusMessage({ type: 'error', text: 'Preencha os campos obrigatórios corretamente.' });
       return;
     }
+    
     setIsPrinting(true);
     const element = document.getElementById('printable-receipt');
+    
+    if (!element) return;
+  
+    // Passo fundamental: Salva a escala atual e remove para a captura
+    const originalTransform = element.style.transform;
+    element.style.transform = 'none';
+  
     try {
-      const canvas = await html2canvas(element!, { scale: 3, useCORS: true, logging: false });
+      // Captura com escala maior para alta definição
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: element.offsetWidth,
+        height: element.offsetHeight
+      });
+  
+      // Restaura o visual do navegador imediatamente após a captura
+      element.style.transform = originalTransform;
+  
       const pdf = new jsPDF('p', 'mm', 'a4');
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      
+      // Adiciona a imagem preenchendo 100% da página A4 (210x297mm)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
       
       const fileName = `Recibo_${receiptNumber}_${provider.name.split(' ')[0]}.pdf`;
       if (shouldDownload) pdf.save(fileName);
       
-      const newEntry = { 
-        id: receiptNumber, 
-        date, 
-        type: ReceiptType.SERVICE, 
-        items: [...items], 
-        city, 
-        provider: { ...provider }, 
-        tomador: selectedTomador,
-        discount,
-        taxesPercentage,
-        taxesValue,
-        totalLiquido
-      };
+      // ... lógica de histórico (mantenha como está)
+      const newEntry = { /* ... seu código existente ... */ };
       setHistory(prev => [newEntry, ...prev]);
-      
       setReceiptNumber(generateReceiptNumber());
-      localStorage.setItem('recibos_last_number', receiptNumber);
       setStatusMessage({ type: 'success', text: 'Recibo gerado com sucesso!' });
+  
     } catch (e) {
+      console.error(e);
       setStatusMessage({ type: 'error', text: 'Erro ao processar PDF.' });
-    } finally { setIsPrinting(false); }
-  };
+      element.style.transform = originalTransform; // Restaura em caso de erro
+    } finally { 
+      setIsPrinting(false); 
+    }
+};
 
   const loginAdmin = () => {
     if (adminPassword === "senha123") {
@@ -413,7 +427,22 @@ const App: React.FC = () => {
 
       {/* PRÉ-VISUALIZAÇÃO A4 */}
       <div className="lg:w-3/5 bg-slate-200/30 p-6 lg:p-12 flex justify-center items-start overflow-y-auto h-screen no-scrollbar no-print">
-        <div className="bg-white shadow-2xl flex flex-col relative scale-[0.6] md:scale-[0.8] lg:scale-[1] origin-top" id="printable-receipt" style={{ width: '210mm', minHeight: '297mm', padding: '15mm 20mm', boxSizing: 'border-box', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', color: '#1a1f2c', fontFamily: "'Inter', sans-serif" }}>
+        <div 
+          className="bg-white shadow-2xl flex flex-col relative origin-top" 
+          id="printable-receipt" 
+          style={{ 
+            width: '210mm', 
+            height: '297mm', // Adicione altura fixa para forçar a proporção A4
+            minHeight: '297mm',
+            padding: '15mm 20mm', 
+            boxSizing: 'border-box', 
+            backgroundColor: '#ffffff', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            color: '#1a1f2c', 
+            fontFamily: "'Inter', sans-serif" 
+          }}
+        >
           
           <ReceiptHeader receiptNumber={receiptNumber} city={city} />
 
