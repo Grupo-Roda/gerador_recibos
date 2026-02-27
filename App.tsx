@@ -32,7 +32,7 @@ import extenso from 'extenso';
 
 // Componente de Cabeçalho Reutilizável (Tipográfico - Sem Logo)
 const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ receiptNumber, city }) => (
-  <div className="flex justify-between items-start mb-10 pb-10 border-b border-slate-100 w-full">
+  <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-100 w-full"> 
     <div className="flex flex-col">
       <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-12 w-auto object-contain mb-4" />
       <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mt-4 flex items-center gap-3">
@@ -198,57 +198,85 @@ const App: React.FC = () => {
   };
 
   const generatePDF = async (shouldDownload: boolean = true) => {
-    if (!validateForm()) {
-      setStatusMessage({ type: 'error', text: 'Preencha os campos obrigatórios corretamente.' });
-      return;
-    }
-    
-    setIsPrinting(true);
-    const element = document.getElementById('printable-receipt');
-    
-    if (!element) return;
+      if (!validateForm()) {
+        setStatusMessage({ type: 'error', text: 'Preencha os campos obrigatórios corretamente.' });
+        return;
+      }
   
-    // Passo fundamental: Salva a escala atual e remove para a captura
-    const originalTransform = element.style.transform;
-    element.style.transform = 'none';
-  
-    try {
-      // Captura com escala maior para alta definição
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true, 
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: element.offsetWidth,
-        height: element.offsetHeight
-      });
-  
-      // Restaura o visual do navegador imediatamente após a captura
-      element.style.transform = originalTransform;
-  
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      setIsPrinting(true);
       
-      // Adiciona a imagem preenchendo 100% da página A4 (210x297mm)
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-      
-      const fileName = `Recibo_${receiptNumber}_${provider.name.split(' ')[0]}.pdf`;
-      if (shouldDownload) pdf.save(fileName);
-      
-      // ... lógica de histórico (mantenha como está)
-      const newEntry = { /* ... seu código existente ... */ };
-      setHistory(prev => [newEntry, ...prev]);
-      setReceiptNumber(generateReceiptNumber());
-      setStatusMessage({ type: 'success', text: 'Recibo gerado com sucesso!' });
+      // Captura o elemento do recibo
+      const element = document.getElementById('printable-receipt');
+      if (!element) return;
   
-    } catch (e) {
-      console.error(e);
-      setStatusMessage({ type: 'error', text: 'Erro ao processar PDF.' });
-      element.style.transform = originalTransform; // Restaura em caso de erro
-    } finally { 
-      setIsPrinting(false); 
-    }
-};
+      // 1. Truque da Escala: Salva a escala visual atual e a remove temporariamente
+      // Isso evita que o PDF saia "achatado" ou pequeno
+      const originalTransform = element.style.transform;
+      element.style.transform = 'none';
+  
+      try {
+        // 2. Captura a imagem com alta densidade (scale: 2 ou 3)
+        const canvas = await html2canvas(element, {
+          scale: 2, // Aumenta a qualidade sem deixar o arquivo pesado demais
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          // Força o tamanho exato de um A4 em pixels para a captura
+          windowWidth: 794, 
+          windowHeight: 1123,
+          x: 0,
+          y: 0,
+          scrollX: 0,
+          scrollY: 0
+        });
+  
+        // 3. Restaura o visual do navegador imediatamente
+        element.style.transform = originalTransform;
+  
+        // 4. Configura o PDF para A4 (210mm x 297mm)
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+  
+        // 5. Insere a imagem ocupando a folha inteira
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  
+        const fileName = `Recibo_${receiptNumber}_${provider.name.split(' ')[0] || 'Doc'}.pdf`;
+        
+        if (shouldDownload) {
+          pdf.save(fileName);
+        }
+  
+        // 6. Lógica de Histórico
+        const newEntry = { 
+          id: receiptNumber, 
+          date, 
+          type: ReceiptType.SERVICE, 
+          items: [...items], 
+          city, 
+          provider: { ...provider }, 
+          tomador: selectedTomador,
+          discount,
+          taxesPercentage,
+          taxesValue,
+          totalLiquido
+        };
+        
+        setHistory(prev => [newEntry, ...prev]);
+        
+        // 7. Reseta para o próximo recibo
+        setReceiptNumber(generateReceiptNumber());
+        localStorage.setItem('recibos_last_number', receiptNumber);
+        setStatusMessage({ type: 'success', text: 'Recibo gerado e salvo com sucesso!' });
+  
+      } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        // Garante que o layout volte ao normal mesmo se der erro
+        element.style.transform = originalTransform;
+        setStatusMessage({ type: 'error', text: 'Falha técnica ao processar o PDF.' });
+      } finally {
+        setIsPrinting(false);
+      }
+    };
 
   const loginAdmin = () => {
     if (adminPassword === "senha123") {
@@ -473,11 +501,10 @@ const App: React.FC = () => {
                 </div>
              </div>
              <div className="flex flex-col gap-6">
-                <div className="bg-slate-900 rounded-[40px] p-8 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden flex-grow min-h-[180px]">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
-                   <Wallet className="text-slate-400 mb-3" size={32}/>
-                   <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] mb-2">VALOR TOTAL BRUTO</p>
-                   <p className="text-white text-[36px] font-black tracking-normal leading-none tabular-nums">{formatCurrency(totalBruto)}</p>
+                <div className="bg-slate-900 rounded-[30px] p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden flex-grow min-h-[140px]">
+                   <Wallet className="text-slate-400 mb-2" size={24}/>
+                   <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] mb-1">VALOR TOTAL BRUTO</p>
+                   <p className="text-white text-[28px] font-black leading-none tabular-nums">{formatCurrency(totalBruto)}</p>
                 </div>
                 <div className="bg-slate-100 p-6 rounded-[28px] text-center border border-slate-200">
                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2">FORMA DE CRÉDITO:</h4>
@@ -534,17 +561,15 @@ const App: React.FC = () => {
                      </div>
                    )}
                    
-                   <div className="bg-slate-900 text-white p-10 rounded-[48px] flex flex-col items-center justify-center text-center shadow-2xl mt-6 relative overflow-hidden">
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 italic">VALOR LÍQUIDO TOTAL A RECEBER</span>
-                      <span className="text-[42px] font-black tracking-normal leading-none tabular-nums mb-4">{formattedTotalLiquido}</span>
-                      <div className="max-w-[80%] border-t border-white/10 pt-4">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                          ({extenso(totalLiquido, { mode: 'currency' })})
+                   <div className="bg-slate-900 text-white p-6 rounded-[32px] flex flex-col items-center justify-center text-center shadow-2xl mt-4 relative overflow-hidden">
+                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic">VALOR LÍQUIDO TOTAL A RECEBER</span>
+                     <span className="text-[36px] font-black leading-none tabular-nums mb-2">{formattedTotalLiquido}</span>
+                     <div className="max-w-[90%] border-t border-white/10 pt-2">
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                           ({extenso(totalLiquido, { mode: 'currency' })})
                         </p>
-                      </div>
-                   </div>
+                     </div>
+                  </div>
                 </div>
              </div>
           </div>
