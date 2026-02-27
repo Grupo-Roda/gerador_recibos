@@ -27,6 +27,7 @@ import { ReceiptType, ProviderInfo, ReceiptItem, TOMADORES_LIST, ReceiptData } f
 import { GoogleGenAI } from "@google/genai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import logoEmpresa from './logo.png';
 import extenso from 'extenso';
 
 // Componente de Cabeçalho Reutilizável (Tipográfico - Sem Logo)
