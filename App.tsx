@@ -32,19 +32,19 @@ import extenso from 'extenso';
 
 // Componente de Cabeçalho Reutilizável (Tipográfico - Sem Logo)
 const ReceiptHeader: React.FC<{ receiptNumber: string, city: string }> = ({ receiptNumber, city }) => (
-  <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-100 w-full"> 
+  <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100 w-full shrink-0">
     <div className="flex flex-col">
-      <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-12 w-auto object-contain mb-4" />
-      <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mt-4 flex items-center gap-3">
-        <span className="h-[1px] w-6 bg-slate-900"></span>
+      <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-10 w-auto object-contain mb-2" />
+      <p className="text-[9px] font-black text-slate-900 uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+        <span className="h-[1px] w-4 bg-slate-900"></span>
         RECIBO SIMPLES
       </p>
     </div>
     <div className="text-right flex flex-col items-end">
-      <div className="bg-slate-900 text-white px-14 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] mb-4 shadow-lg">
+      <div className="bg-slate-900 text-white px-8 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.1em] mb-2 shadow-sm">
         NÚMERO: {receiptNumber}
       </div>
-      <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.15em] leading-none">
+      <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.15em] leading-none">
         {city.toUpperCase()}, {new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}).toUpperCase()}
       </p>
     </div>
@@ -454,61 +454,61 @@ const App: React.FC = () => {
       </div>
 
       {/* PRÉ-VISUALIZAÇÃO A4 */}
-      <div className="lg:w-3/5 bg-slate-200/30 p-6 lg:p-12 flex justify-center items-start overflow-y-auto h-screen no-scrollbar no-print">
+      <div className="lg:w-3/5 bg-slate-200/30 p-6 flex justify-center items-start overflow-y-auto h-screen no-scrollbar no-print">
         <div 
-          className="bg-white shadow-2xl flex flex-col relative origin-top" 
+          className="bg-white shadow-2xl flex flex-col relative origin-top scale-[0.6] md:scale-[0.8] lg:scale-[1]" 
           id="printable-receipt" 
           style={{ 
             width: '210mm', 
-            height: '297mm', // Adicione altura fixa para forçar a proporção A4
-            minHeight: '297mm',
-            padding: '15mm 20mm', 
+            height: '297mm', // Força a altura exata
+            padding: '10mm 15mm', // Reduzimos a margem branca da folha
             boxSizing: 'border-box', 
             backgroundColor: '#ffffff', 
             display: 'flex', 
             flexDirection: 'column', 
             color: '#1a1f2c', 
-            fontFamily: "'Inter', sans-serif" 
+            fontFamily: "'Inter', sans-serif",
+            overflow: 'hidden' // Impede que qualquer coisa vaze
           }}
         >
           
           <ReceiptHeader receiptNumber={receiptNumber} city={city} />
 
-          <div className="mb-8 text-center">
-            <h2 className="text-[18px] font-black uppercase tracking-[0.2em] text-slate-900">RECIBO DE <span className="text-slate-900">PAGAMENTO</span></h2>
+          <div className="mb-4 text-center shrink-0">
+            <h2 className="text-[14px] font-black uppercase tracking-[0.2em] text-slate-900">RECIBO DE PAGAMENTO</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-10 mb-10">
-             <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6 mb-6 shrink-0">
+             <div className="space-y-4">
                 <div>
-                   <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 italic">01. DADOS DO PAGADOR</h4>
-                   <div className="p-6 bg-slate-100 rounded-[28px] space-y-1.5 text-[10px] border border-slate-200 shadow-sm">
-                      <p className="font-black text-[12px] text-slate-900 uppercase leading-tight mb-1">{selectedTomador.name}</p>
-                      <p className="text-slate-500 font-bold uppercase tracking-normal">CNPJ: {selectedTomador.cnpj}</p>
-                      <p className="text-slate-400 font-bold uppercase leading-relaxed tracking-normal">{selectedTomador.address}</p>
-                      <p className="text-slate-400 font-bold uppercase tracking-normal">{selectedTomador.neighborhood} - CEP: {selectedTomador.cep}</p>
+                   <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2 italic">01. DADOS DO PAGADOR</h4>
+                   <div className="p-4 bg-slate-100 rounded-[20px] space-y-1 text-[9px] border border-slate-200">
+                      <p className="font-black text-[10px] text-slate-900 uppercase">{selectedTomador.name}</p>
+                      <p className="text-slate-500 font-bold uppercase">CNPJ: {selectedTomador.cnpj}</p>
+                      <p className="text-slate-400 font-bold uppercase">{selectedTomador.address}</p>
+                      <p className="text-slate-400 font-bold uppercase">{selectedTomador.neighborhood} - CEP: {selectedTomador.cep}</p>
                    </div>
                 </div>
                 <div>
-                   <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 italic">02. DADOS DO RECEBEDOR</h4>
-                   <div className="p-6 bg-slate-100 border border-slate-200 rounded-[28px] space-y-1.5 text-[10px] shadow-sm">
-                      <p className="font-black text-[12px] uppercase text-slate-900 leading-tight mb-1">{provider.name || "---"}</p>
-                      <p className="text-slate-500 font-bold uppercase tracking-normal">DOC: {provider.document || "---"}</p>
-                      {provider.address && <p className="text-slate-400 font-bold uppercase leading-tight tracking-normal">{provider.address}</p>}
-                      {provider.phone && <p className="text-slate-400 font-bold tracking-normal">{provider.phone}</p>}
-                      {provider.email && <p className="text-slate-400 font-bold lowercase italic tracking-normal">{provider.email}</p>}
+                   <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2 italic">02. DADOS DO RECEBEDOR</h4>
+                   <div className="p-4 bg-slate-100 border border-slate-200 rounded-[20px] space-y-1 text-[9px]">
+                      <p className="font-black text-[10px] uppercase text-slate-900">{provider.name || "---"}</p>
+                      <p className="text-slate-500 font-bold uppercase">DOC: {provider.document || "---"}</p>
+                      {provider.address && <p className="text-slate-400 font-bold uppercase">{provider.address}</p>}
+                      {provider.phone && <p className="text-slate-400 font-bold">{provider.phone}</p>}
+                      {provider.email && <p className="text-slate-400 font-bold lowercase italic">{provider.email}</p>}
                    </div>
                 </div>
              </div>
-             <div className="flex flex-col gap-6">
-                <div className="bg-slate-900 rounded-[30px] p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden flex-grow min-h-[140px]">
+             <div className="flex flex-col gap-4">
+                <div className="bg-slate-900 rounded-[24px] p-5 flex flex-col items-center justify-center text-center relative overflow-hidden flex-grow">
                    <Wallet className="text-slate-400 mb-2" size={24}/>
                    <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] mb-1">VALOR TOTAL BRUTO</p>
-                   <p className="text-white text-[28px] font-black leading-none tabular-nums">{formatCurrency(totalBruto)}</p>
+                   <p className="text-white text-[28px] font-black tabular-nums">{formatCurrency(totalBruto)}</p>
                 </div>
-                <div className="bg-slate-100 p-6 rounded-[28px] text-center border border-slate-200">
-                   <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2">FORMA DE CRÉDITO:</h4>
-                   <p className="text-[12px] font-black text-slate-900 uppercase italic leading-tight tracking-normal">{provider.bankInfo || "A COMBINAR"}</p>
+                <div className="bg-slate-100 p-4 rounded-[20px] text-center border border-slate-200 shrink-0">
+                   <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">FORMA DE CRÉDITO:</h4>
+                   <p className="text-[10px] font-black text-slate-900 uppercase italic">{provider.bankInfo || "A COMBINAR"}</p>
                 </div>
              </div>
           </div>
@@ -517,22 +517,22 @@ const App: React.FC = () => {
              <table className="w-full border-collapse">
                 <thead>
                    <tr className="bg-slate-50 border-y border-slate-200">
-                      <th className="text-left py-4 px-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">ITEM E DESCRIÇÃO DOS SERVIÇOS</th>
-                      <th className="text-right py-4 px-6 text-[10px] font-black text-slate-400 uppercase w-48 tracking-[0.15em]">VALOR BRUTO (R$)</th>
+                      <th className="text-left py-2 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">ITEM E DESCRIÇÃO</th>
+                      <th className="text-right py-2 px-4 text-[9px] font-black text-slate-400 uppercase w-32 tracking-[0.15em]">BRUTO (R$)</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                    {items.map((item, i) => (
                      <tr key={item.id}>
-                        <td className="py-5 px-6">
-                           <div className="flex items-center gap-5">
-                              <div className="bg-slate-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-md">
+                        <td className="py-3 px-4">
+                           <div className="flex items-center gap-3">
+                              <div className="bg-slate-900 text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black shrink-0">
                                {String(i+1).padStart(2, '0')}
                               </div>
-                              <p className="text-slate-900 font-black text-[12px] uppercase tracking-normal leading-relaxed">{item.description || "SERVIÇOS PRESTADOS"}</p>
+                              <p className="text-slate-900 font-black text-[10px] uppercase">{item.description || "SERVIÇOS PRESTADOS"}</p>
                            </div>
                         </td>
-                        <td className="py-5 px-6 text-right font-black text-slate-900 text-[15px] tabular-nums tracking-normal">
+                        <td className="py-3 px-4 text-right font-black text-slate-900 text-[12px] tabular-nums">
                           {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.value)}
                         </td>
                      </tr>
@@ -540,69 +540,67 @@ const App: React.FC = () => {
                 </tbody>
              </table>
 
-             <div className="mt-10">
-                <div className="w-full space-y-3">
-                   <div className="flex justify-between items-center py-2 px-8 border-b border-slate-50">
-                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.1em]">SUBTOTAL BRUTO</span>
-                      <span className="text-[16px] font-black text-slate-600 tabular-nums tracking-normal">{formatCurrency(totalBruto)}</span>
+             <div className="mt-6">
+                <div className="w-full space-y-2">
+                   <div className="flex justify-between items-center py-1 px-4 border-b border-slate-50">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">SUBTOTAL BRUTO</span>
+                      <span className="text-[13px] font-black text-slate-600 tabular-nums">{formatCurrency(totalBruto)}</span>
                    </div>
                    
                    {discount > 0 && (
-                     <div className="flex justify-between items-center py-2 px-8 border-b border-slate-50">
-                        <span className="text-[11px] font-black text-rose-500 uppercase tracking-[0.1em]">(-) DESCONTOS</span>
-                        <span className="text-[16px] font-black text-rose-500 tabular-nums tracking-normal">{formatCurrency(discount)}</span>
+                     <div className="flex justify-between items-center py-1 px-4 border-b border-slate-50">
+                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.1em]">(-) DESCONTOS</span>
+                        <span className="text-[13px] font-black text-rose-500 tabular-nums">{formatCurrency(discount)}</span>
                      </div>
                    )}
                    
                    {taxesPercentage > 0 && (
-                     <div className="flex justify-between items-center py-2 px-8 border-b border-slate-50">
-                        <span className="text-[11px] font-black text-rose-500 uppercase tracking-[0.1em]">(-) IMPOSTOS ({taxesPercentage}%)</span>
-                        <span className="text-[14px] font-black text-rose-500 tabular-nums tracking-normal">{formatCurrency(taxesValue)}</span>
+                     <div className="flex justify-between items-center py-1 px-4 border-b border-slate-50">
+                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.1em]">(-) IMPOSTOS ({taxesPercentage}%)</span>
+                        <span className="text-[12px] font-black text-rose-500 tabular-nums">{formatCurrency(taxesValue)}</span>
                      </div>
                    )}
                    
-                   <div className="bg-slate-900 text-white p-6 rounded-[32px] flex flex-col items-center justify-center text-center shadow-2xl mt-4 relative overflow-hidden">
-                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic">VALOR LÍQUIDO TOTAL A RECEBER</span>
-                     <span className="text-[36px] font-black leading-none tabular-nums mb-2">{formattedTotalLiquido}</span>
-                     <div className="max-w-[90%] border-t border-white/10 pt-2">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                           ({extenso(totalLiquido, { mode: 'currency' })})
+                   <div className="bg-slate-900 text-white p-6 rounded-[32px] flex flex-col items-center justify-center text-center shadow-xl mt-4 relative overflow-hidden">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic">VALOR LÍQUIDO TOTAL A RECEBER</span>
+                      <span className="text-[32px] font-black tracking-normal tabular-nums mb-2">{formattedTotalLiquido}</span>
+                      <div className="max-w-[90%] border-t border-white/10 pt-2">
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                          ({extenso(totalLiquido, { mode: 'currency' })})
                         </p>
-                     </div>
-                  </div>
+                      </div>
+                   </div>
                 </div>
              </div>
           </div>
 
-          <div className="mt-12 pt-10 border-t border-slate-200">
-             <div className="flex gap-12 items-start">
+          {/* RODAPÉ E ASSINATURAS */}
+          <div className="mt-auto pt-6 border-t border-slate-200 shrink-0">
+             <div className="flex gap-8 items-end">
                 <div className="flex-grow text-center flex flex-col items-center">
-                   <div className="relative w-full max-w-sm">
-                      <div className="h-24 flex items-end justify-center mb-[-2px]">
-                         {provider.signature && <img src={provider.signature} className="max-h-[160%] w-auto object-contain translate-y-7 scale-110 mix-blend-multiply" alt="Assinatura" />}
+                   <div className="relative w-full max-w-[240px]">
+                      <div className="h-16 flex items-end justify-center mb-[-2px]">
+                         {provider.signature && <img src={provider.signature} className="max-h-[140%] w-auto object-contain translate-y-4 scale-100 mix-blend-multiply" alt="Assinatura" />}
                       </div>
-                      <div className="w-full h-[0.6mm] bg-slate-900 mb-4"></div>
-                      <p className="font-black text-slate-900 text-[12px] uppercase leading-none mb-1 tracking-normal">{provider.name || "ASSINATURA DO EMISSOR"}</p>
-                      <p className="text-slate-400 font-bold text-[8px] uppercase tracking-[0.15em] italic">VALOR RECEBIDO E QUITADO INTEGRALMENTE</p>
+                      <div className="w-full h-[0.5mm] bg-slate-900 mb-2"></div>
+                      <p className="font-black text-slate-900 text-[10px] uppercase leading-none mb-1">{provider.name || "ASSINATURA DO EMISSOR"}</p>
+                      <p className="text-slate-400 font-bold text-[7px] uppercase tracking-[0.15em] italic">VALOR RECEBIDO E QUITADO INTEGRALMENTE</p>
                    </div>
-                   <div className="mt-6 flex items-center gap-2.5 bg-slate-50 px-5 py-2 rounded-full border border-slate-200">
-                       <ShieldCheck size={12} className="text-slate-900"/><span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">DOCUMENTO VALIDADO DIGITALMENTE</span>
+                   <div className="mt-4 flex items-center gap-2 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
+                       <ShieldCheck size={10} className="text-slate-900"/><span className="text-[6px] font-black text-slate-400 uppercase tracking-[0.2em]">DOCUMENTO VALIDADO DIGITALMENTE</span>
                    </div>
                 </div>
-                <div className="w-full">
-                   <div className="bg-slate-100 border border-slate-200 rounded-[40px] p-10 flex flex-col items-center justify-center text-center gap-4 shadow-sm relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-slate-900/5 rounded-full -mr-10 -mt-10"></div>
-                      <div className="bg-slate-900 p-4 rounded-2xl shrink-0 shadow-lg">
+                <div className="w-[240px]">
+                   <div className="bg-slate-100 border border-slate-200 rounded-[24px] p-5 flex flex-col items-center justify-center text-center gap-3 relative overflow-hidden">
+                      <div className="bg-slate-900 p-3 rounded-xl shrink-0">
                         <div className="grid grid-cols-2 gap-1">
-                          <div className="w-2 h-2 bg-white"></div>
-                          <div className="w-2 h-2 bg-white"></div>
-                          <div className="w-2 h-2 bg-white"></div>
-                          <div className="w-2 h-2 bg-white/20"></div>
+                          <div className="w-1.5 h-1.5 bg-white"></div><div className="w-1.5 h-1.5 bg-white"></div>
+                          <div className="w-1.5 h-1.5 bg-white"></div><div className="w-1.5 h-1.5 bg-white/20"></div>
                         </div>
                       </div>
-                      <div className="max-w-md">
-                        <span className="text-[11px] font-black text-slate-900 uppercase tracking-[0.15em] block mb-2">VERIFICAÇÃO DIGITAL</span>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase leading-relaxed tracking-normal">
+                      <div>
+                        <span className="text-[9px] font-black text-slate-900 uppercase tracking-[0.15em] block mb-1">VERIFICAÇÃO DIGITAL</span>
+                        <p className="text-[7px] font-bold text-slate-400 uppercase leading-relaxed">
                           ESTE DOCUMENTO PODE SER VALIDADO ATRAVÉS DO SISTEMA INTERNO DO GRUPO RODAMOINHO.
                         </p>
                       </div>
@@ -612,8 +610,5 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
 
 export default App;
