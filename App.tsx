@@ -308,16 +308,18 @@ const App: React.FC = () => {
       {/* PAINEL DE CONTROLE */}
       <div className="lg:w-2/5 p-6 lg:p-8 no-print overflow-y-auto max-h-screen border-r border-slate-200 bg-white no-scrollbar">
         <header className="mb-10 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-slate-900 p-2.5 rounded-2xl text-white shadow-xl shadow-slate-900/20"><FileText size={22} /></div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic">GRUPO RODAMOINHO</h1>
+          
+          {/* NOVA LOGO AQUI */}
+          <div className="flex items-center gap-3">
+            <img src={logoEmpresa} alt="Grupo Rodamoinho" className="h-10 w-auto object-contain drop-shadow-sm" />
           </div>
+
           <div className="flex bg-slate-100 p-1 rounded-2xl">
             <button onClick={() => setActiveTab('form')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'form' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400'}`}>Gerador</button>
             <button onClick={() => setActiveTab('history')} className={`px-5 py-2.5 text-[10px] font-black uppercase rounded-xl transition-all ${activeTab === 'history' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400'}`}>Histórico</button>
           </div>
         </header>
-
+        
         {activeTab === 'form' ? (
           <div className="space-y-8 pb-20">
             {/* Empresa Tomadora */}
